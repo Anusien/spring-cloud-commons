@@ -1129,7 +1129,7 @@ public class MyConfiguration {
 
     @Bean
     HedgingMetricsReporter hedgingReporterA() {
-		new HedgingMetricsReporter() {
+		return new HedgingMetricsReporter() {
 			@Override
 			public void record(ClientRequest request, ClientResponse response, long elapsedMillis, Integer hedgeNumber) {
 				// TODO Do your business...
@@ -1139,7 +1139,7 @@ public class MyConfiguration {
 
     @Bean
     HedgingMetricsReporter hedgingReporterB() {
-		new HedgingMetricsReporter() {
+		return new HedgingMetricsReporter() {
 			@Override
 			public void record(ClientRequest request, ClientResponse response, long elapsedMillis, Integer hedgeNumber) {
 				// TODO Do your business...
