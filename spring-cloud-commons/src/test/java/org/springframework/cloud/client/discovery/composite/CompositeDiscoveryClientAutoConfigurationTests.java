@@ -27,8 +27,8 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.client.discovery.simple.SimpleDiscoveryClient;
-import org.springframework.cloud.client.hedger.EnableHedger;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -66,7 +66,7 @@ public class CompositeDiscoveryClientAutoConfigurationTests {
 				.isInstanceOf(SimpleDiscoveryClient.class);
 	}
 
-	@EnableHedger
+	@EnableDiscoveryClient
 	@EnableAutoConfiguration
 	@SpringBootConfiguration
 	@Configuration(proxyBeanMethods = false)

@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
- * Annotation for a method invocation that is hedge-able. Hedging requests are a way to retry requests that have long
+ * Annotation for a method invocation that is hedge-able. Hedging requests is a way to retry requests that have long
  * worst-case response times. If a request is known to be safe to issue multiple times, we will fire off multiple
  * requests, potentially after some initial delay.
  *

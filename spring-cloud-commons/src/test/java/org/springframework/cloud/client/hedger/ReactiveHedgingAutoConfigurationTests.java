@@ -38,7 +38,7 @@ import static org.mockito.Mockito.mock;
  * @author Kevin Binswanger
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest(properties = "spring.cloud.hedger.enabled=true")
+@SpringBootTest
 public class ReactiveHedgingAutoConfigurationTests {
 
 	@Autowired
@@ -79,7 +79,6 @@ public class ReactiveHedgingAutoConfigurationTests {
 	}
 
 	@EnableAutoConfiguration
-	@EnableHedger
 	@Configuration(proxyBeanMethods = false)
 	public static class Config {
 
