@@ -21,17 +21,29 @@ import java.time.Duration;
 import org.springframework.lang.Nullable;
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.WebClient;
 
 /**
+ * Controls the parameters for a {@link WebClient.Builder} annotated with {@link Hedged}.
  * @author Kevin Binswanger
  */
-public interface HedgingClient {
+public interface HedgingPolicy {
 	boolean shouldHedge(ClientRequest request);
 
 	int getNumberOfHedgedRequests(ClientRequest request);
 
 	Duration getDelayBeforeHedging(ClientRequest request);
 
+	/**
+	 * Similar to {@link HedgingMetricsReporter}, this method will be invoked on requests by the {@link WebClient.Builder}
+	 * this policy attaches to. Will be called at most once for a hedged request sequence, on just the one request
+	 * that we actually used.
+	 * @param request The HTTP request.
+	 * @param response The eventual HTTP response.
+	 * @param elapsedMillis The number of milliseconds elapsed just for this attempt (ignores time spent waiting on
+	 * 	 *                      previous attempts).
+	 * @param hedgeNumber {null} for the original request, or which hedge attempt this is (starting at 1).
+	 */
 	void record(ClientRequest request,
 				ClientResponse response,
 				long elapsedMillis,

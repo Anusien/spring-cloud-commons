@@ -53,20 +53,20 @@ public class HedgedRequestsExchangeFilterFunction implements ExchangeFilterFunct
 	private static final Log log = LogFactory
 			.getLog(HedgedRequestsExchangeFilterFunction.class);
 
-	private HedgingClient hedgingClient;
+	private HedgingPolicy hedgingPolicy;
 	private List<HedgingMetricsReporter> hedgingMetricsReporterList;
 
 	public HedgedRequestsExchangeFilterFunction(
-			HedgingClient hedgingClient, List<HedgingMetricsReporter> hedgingMetricsReportersList) {
-		this.hedgingClient = hedgingClient;
+			HedgingPolicy hedgingPolicy, List<HedgingMetricsReporter> hedgingMetricsReportersList) {
+		this.hedgingPolicy = hedgingPolicy;
 		this.hedgingMetricsReporterList = hedgingMetricsReportersList;
 	}
 
 	@Override
 	@NonNull
 	public Mono<ClientResponse> filter(@NonNull ClientRequest request, ExchangeFunction next) {
-		Duration delay = hedgingClient.getDelayBeforeHedging(request);
-		int numHedges = numberOfHedgedRequestsDelayAware(request, hedgingClient, delay);
+		Duration delay = hedgingPolicy.getDelayBeforeHedging(request);
+		int numHedges = numberOfHedgedRequestsDelayAware(request, hedgingPolicy, delay);
 		return withSingleMetricsReporting(request, next.exchange(request), null)
 				.mergeWith(
 						Flux.range(1, numHedges)
@@ -84,17 +84,17 @@ public class HedgedRequestsExchangeFilterFunction implements ExchangeFilterFunct
 
 	private int numberOfHedgedRequestsDelayAware(
 			ClientRequest request,
-			HedgingClient hedgingClient,
+			HedgingPolicy hedgingPolicy,
 			Duration delay
 	) {
-		if (!hedgingClient.shouldHedge(request)) {
+		if (!hedgingPolicy.shouldHedge(request)) {
 			return 0;
 		}
 		else if (delay.isNegative()) {
 			return 0;
 		}
 		else {
-			return hedgingClient.getNumberOfHedgedRequests(request);
+			return hedgingPolicy.getNumberOfHedgedRequests(request);
 		}
 	}
 
@@ -106,7 +106,7 @@ public class HedgedRequestsExchangeFilterFunction implements ExchangeFilterFunct
 		return response
 				.elapsed()
 				.doOnSuccess(tuple -> {
-					hedgingClient.record(request, tuple.getT2(), tuple.getT1(), hedgeNumber);
+					hedgingPolicy.record(request, tuple.getT2(), tuple.getT1(), hedgeNumber);
 					hedgingMetricsReporterList.forEach(reporter -> reporter.record(request, tuple.getT2(), tuple.getT1(), hedgeNumber));
 				})
 				.map(Tuple2::getT2);

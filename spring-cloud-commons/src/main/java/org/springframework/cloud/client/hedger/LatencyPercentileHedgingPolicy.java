@@ -35,7 +35,7 @@ import org.springframework.web.reactive.function.client.ClientResponse;
  * @author Csaba Kos
  * @author Kevin Binswanger
  */
-public class LatencyPercentileHedgingClient implements HedgingClient {
+public class LatencyPercentileHedgingPolicy implements HedgingPolicy {
 	private final Predicate<ClientRequest> shouldTrackRequestPredicate;
 	private final int numHedgedRequests;
 	private final TimeWindowMax max;
@@ -43,14 +43,14 @@ public class LatencyPercentileHedgingClient implements HedgingClient {
 	private final LongAdder count = new LongAdder();
 	private final DoubleAdder total = new DoubleAdder();
 
-	public LatencyPercentileHedgingClient(
+	public LatencyPercentileHedgingPolicy(
 			int numHedgedRequests,
 			double percentile
 	) {
 		this(clientRequest -> true, numHedgedRequests, percentile, Clock.SYSTEM);
 	}
 
-	public LatencyPercentileHedgingClient(
+	public LatencyPercentileHedgingPolicy(
 			Predicate<ClientRequest> shouldTrackRequestPredicate,
 			int numHedgedRequests,
 			double percentile,
@@ -59,7 +59,7 @@ public class LatencyPercentileHedgingClient implements HedgingClient {
 		this(shouldTrackRequestPredicate, numHedgedRequests, makeDefaultConfig(percentile), clock);
 	}
 
-	public LatencyPercentileHedgingClient(
+	public LatencyPercentileHedgingPolicy(
 			Predicate<ClientRequest> shouldTrackRequestPredicate,
 			int numHedgedRequests,
 			DistributionStatisticConfig distributionStatisticConfig,

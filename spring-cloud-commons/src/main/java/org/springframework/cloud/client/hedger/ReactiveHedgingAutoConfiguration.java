@@ -40,7 +40,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @ConditionalOnClass(WebClient.class)
 public class ReactiveHedgingAutoConfiguration {
 	@Bean
-	@ConditionalOnBean(HedgingClient.class)
+	@ConditionalOnBean(HedgingPolicy.class)
 	HedgingWebClientBuilderPostProcessor hedgingWebClientBuilderPostProcessor(ApplicationContext context) {
 		return new HedgingWebClientBuilderPostProcessor(context);
 	}
@@ -67,12 +67,12 @@ public class ReactiveHedgingAutoConfiguration {
 
 			WebClient.Builder builder = (WebClient.Builder) bean;
 
-			HedgingClient hedgingClient = beanFactory.getBean(hedged.hedgingClient(), HedgingClient.class);
+			HedgingPolicy hedgingPolicy = beanFactory.getBean(hedged.hedgingPolicy(), HedgingPolicy.class);
 			List<HedgingMetricsReporter> reporters = Arrays.stream(hedged.metricsReporters())
 					.map(metricReporter -> beanFactory.getBean(metricReporter, HedgingMetricsReporter.class))
 					.collect(Collectors.toList());
 
-			HedgedRequestsExchangeFilterFunction hedgedFilterFunction = new HedgedRequestsExchangeFilterFunction(hedgingClient,
+			HedgedRequestsExchangeFilterFunction hedgedFilterFunction = new HedgedRequestsExchangeFilterFunction(hedgingPolicy,
 					reporters);
 			builder.filter(hedgedFilterFunction);
 

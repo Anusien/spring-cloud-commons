@@ -31,10 +31,10 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 public interface HedgingMetricsReporter {
 	/**
 	 * Invoked by {@link HedgedRequestsExchangeFilterFunction} when an attempt actually succeeds.
-	 * @param request The object for the request
-	 * @param response The object for the response.
+	 * @param request The HTTP request.
+	 * @param response The eventual HTTP response.
 	 * @param elapsedMillis The number of milliseconds elapsed just for this attempt (ignores time spent waiting on
-	 *                      previous attempts.
+	 *                      previous attempts).
 	 * @param hedgeNumber {null} for the original request, or which hedge attempt this is (starting at 1).
 	 */
 	void record(ClientRequest request,

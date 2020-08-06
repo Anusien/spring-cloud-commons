@@ -47,10 +47,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Qualifier
 public @interface Hedged {
 	/**
-	 * Name of a bean of type {@link HedgingClient} used to configure hedging.
+	 * Name of a bean of type {@link HedgingPolicy} used to configure hedging.
 	 * @return the hedging client bean name
 	 */
-	String hedgingClient();
+	String hedgingPolicy();
 
 	/**
 	 * Hedging turns a single request into multiple different requests. Developers may want their application to

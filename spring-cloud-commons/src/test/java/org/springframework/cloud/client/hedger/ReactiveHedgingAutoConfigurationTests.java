@@ -45,7 +45,7 @@ public class ReactiveHedgingAutoConfigurationTests {
 	private WebClient.Builder webClientBuilder;
 
 	@Autowired
-	private HedgingClient hedgingClient;
+	private HedgingPolicy hedgingPolicy;
 
 	@Autowired
 	HedgingMetricsReporter reporterA;
@@ -66,8 +66,8 @@ public class ReactiveHedgingAutoConfigurationTests {
 		HedgedRequestsExchangeFilterFunction filter =
 				(HedgedRequestsExchangeFilterFunction) filters.get(0);
 
-		HedgingClient actualHedgingClient = (HedgingClient) ReflectionTestUtils.getField(filter, "hedgingClient");
-		then(actualHedgingClient).isEqualTo(hedgingClient);
+		HedgingPolicy actualHedgingPolicy = (HedgingPolicy) ReflectionTestUtils.getField(filter, "hedgingPolicy");
+		then(actualHedgingPolicy).isEqualTo(hedgingPolicy);
 
 		//noinspection unchecked
 		List<HedgingMetricsReporter> metricsReporters = (List<HedgingMetricsReporter>)
@@ -83,8 +83,8 @@ public class ReactiveHedgingAutoConfigurationTests {
 	public static class Config {
 
 		@Bean
-		HedgingClient mockHedgingClient() {
-			return mock(HedgingClient.class);
+		HedgingPolicy mockHeckingPolicy() {
+			return mock(HedgingPolicy.class);
 		}
 
 		@Bean
@@ -98,7 +98,7 @@ public class ReactiveHedgingAutoConfigurationTests {
 		}
 
 		@Bean
-		@Hedged(hedgingClient = "mockHedgingClient", metricsReporters = {"reporterA", "reporterB"})
+		@Hedged(hedgingPolicy = "mockHeckingPolicy", metricsReporters = {"reporterA", "reporterB"})
 		WebClient.Builder buildWebClient() {
 			return WebClient.builder();
 		}
