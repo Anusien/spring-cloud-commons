@@ -83,7 +83,7 @@ public class ReactiveHedgingAutoConfigurationTests {
 	public static class Config {
 
 		@Bean
-		HedgingPolicy mockHeckingPolicy() {
+		HedgingPolicy mockHedgingPolicy() {
 			return mock(HedgingPolicy.class);
 		}
 
@@ -98,7 +98,7 @@ public class ReactiveHedgingAutoConfigurationTests {
 		}
 
 		@Bean
-		@Hedged(hedgingPolicy = "mockHeckingPolicy", metricsReporters = {"reporterA", "reporterB"})
+		@Hedged(hedgingPolicy = "mockHedgingPolicy", metricsReporters = {"reporterA", "reporterB"})
 		WebClient.Builder buildWebClient() {
 			return WebClient.builder();
 		}
