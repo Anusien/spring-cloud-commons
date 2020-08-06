@@ -98,7 +98,7 @@ public class ReactiveHedgingAutoConfigurationTests {
 		}
 
 		@Bean
-		@Hedged(interceptor = "mockHedgingClient", metricsReporters = {"reporterA", "reporterB"})
+		@Hedged(hedgingClient = "mockHedgingClient", metricsReporters = {"reporterA", "reporterB"})
 		WebClient.Builder buildWebClient() {
 			return WebClient.builder();
 		}

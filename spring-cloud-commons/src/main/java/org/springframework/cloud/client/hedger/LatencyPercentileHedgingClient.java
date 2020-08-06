@@ -35,7 +35,7 @@ import org.springframework.web.reactive.function.client.ClientResponse;
  * @author Csaba Kos
  * @author Kevin Binswanger
  */
-public class SimpleLatencyDistributionPercentileHedgingClient implements HedgingClient {
+public class LatencyPercentileHedgingClient implements HedgingClient {
 	private final Predicate<ClientRequest> shouldTrackRequestPredicate;
 	private final int numHedgedRequests;
 	private final TimeWindowMax max;
@@ -43,20 +43,27 @@ public class SimpleLatencyDistributionPercentileHedgingClient implements Hedging
 	private final LongAdder count = new LongAdder();
 	private final DoubleAdder total = new DoubleAdder();
 
-	public SimpleLatencyDistributionPercentileHedgingClient(
-			Predicate<ClientRequest> shouldTrackRequestPredicate,
+	public LatencyPercentileHedgingClient(
 			int numHedgedRequests,
-			Clock clock,
 			double percentile
 	) {
-		this(shouldTrackRequestPredicate, numHedgedRequests, clock, makeDefaultConfig(percentile));
+		this(clientRequest -> true, numHedgedRequests, percentile, Clock.SYSTEM);
 	}
 
-	public SimpleLatencyDistributionPercentileHedgingClient(
+	public LatencyPercentileHedgingClient(
 			Predicate<ClientRequest> shouldTrackRequestPredicate,
 			int numHedgedRequests,
-			Clock clock,
-			DistributionStatisticConfig distributionStatisticConfig
+			double percentile,
+			Clock clock
+	) {
+		this(shouldTrackRequestPredicate, numHedgedRequests, makeDefaultConfig(percentile), clock);
+	}
+
+	public LatencyPercentileHedgingClient(
+			Predicate<ClientRequest> shouldTrackRequestPredicate,
+			int numHedgedRequests,
+			DistributionStatisticConfig distributionStatisticConfig,
+			Clock clock
 	) {
 		this.shouldTrackRequestPredicate = shouldTrackRequestPredicate;
 		this.numHedgedRequests = numHedgedRequests;

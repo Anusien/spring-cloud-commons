@@ -67,7 +67,7 @@ public class ReactiveHedgingAutoConfiguration {
 
 			WebClient.Builder builder = (WebClient.Builder) bean;
 
-			HedgingClient hedgingClient = beanFactory.getBean(hedged.interceptor(), HedgingClient.class);
+			HedgingClient hedgingClient = beanFactory.getBean(hedged.hedgingClient(), HedgingClient.class);
 			List<HedgingMetricsReporter> reporters = Arrays.stream(hedged.metricsReporters())
 					.map(metricReporter -> beanFactory.getBean(metricReporter, HedgingMetricsReporter.class))
 					.collect(Collectors.toList());
