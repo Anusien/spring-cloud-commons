@@ -1069,9 +1069,9 @@ hedging will keep the original requests and return the first request to succeed.
 of additional network traffic to reduce the long-tail latency.
 
 === Usage
-You can configure a `WebClient` to do request hedging by creating a `HedgingClient` `@Bean` and use the `@Hedged`
-qualifier. The `HedgingClient` allows you to specify how long to wait before executing the extra requests, a maximum
-number of extra requests to create. Most users will want the `LatencyPercentileHedgingClient`, which executes new
+You can configure a `WebClient` to do request hedging by creating a `HedgingPolicy` `@Bean` and use the `@Hedged`
+qualifier. The `HedgingPolicy` allows you to specify how long to wait before executing the extra requests, a maximum
+number of extra requests to create. Most users will want the `LatencyPercentileHedgingPolicy`, which executes new
 requests when the previous ones have exceeded some percentile of the historical latency.
 
 This example shows a typical usage:
@@ -1082,14 +1082,14 @@ This example shows a typical usage:
 @Configuration
 public class MyConfiguration {
     @Bean
-    HedgingClient hedgingClient() {
-    	return new LatencyPercentileHedgingClient(
+    HeckingPolicy hedgingPolicy() {
+    	return new LatencyPercentileHeckingPolicy(
             3, // Maximum extra requests to execute
             0.95 // Percentile of latency to wait before executing an additional request
     	);
     }
 
-    @Hedged(hedgingClient = "hedgingClient")
+    @Hedged(hedgingPolicy = "hedgingPolicy")
     @Bean
     WebClient.Builder webClientBuilder() {
         return WebClient.builder();
@@ -1120,8 +1120,8 @@ reporters are wired in to the `@Hedged` qualifier, as in this example:
 import org.springframework.cloud.client.hedger.HedgingMetricsReporter;@Configuration
 public class MyConfiguration {
     @Bean
-    HedgingClient hedgingClient() {
-    	return new LatencyPercentileHedgingClient(
+    HedgingPolicy hedgingPolicy() {
+    	return new LatencyPercentileHeckingPolicy(
             3, // Maximum extra requests to execute
             0.95 // Percentile of latency to wait before executing an additional request
     	);
@@ -1147,7 +1147,7 @@ public class MyConfiguration {
 		};
     }
 
-    @Hedged(hedgingClient = "hedgingClient", metricsReporters = {"hedgingReporterA", "hedgingReporterB"})
+    @Hedged(hedgingPolicy = "hedgingPolicy", metricsReporters = {"hedgingReporterA", "hedgingReporterB"})
     @Bean
     WebClient.Builder webClientBuilder() {
         return WebClient.builder();
