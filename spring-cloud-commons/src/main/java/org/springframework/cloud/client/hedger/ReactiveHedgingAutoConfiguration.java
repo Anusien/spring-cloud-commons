@@ -37,6 +37,9 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.web.reactive.function.client.WebClient;
 
+/**
+ * @author Kevin Binswanger
+ */
 @Configuration
 @ConditionalOnClass(WebClient.class)
 public class ReactiveHedgingAutoConfiguration implements BeanFactoryAware, BeanPostProcessor {

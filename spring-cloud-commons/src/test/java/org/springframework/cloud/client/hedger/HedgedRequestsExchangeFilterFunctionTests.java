@@ -163,4 +163,53 @@ public class HedgedRequestsExchangeFilterFunctionTests {
 		verify(hedgingClient).record(clientRequest, response, 150, 1);
 		verify(metricsReporter).record(clientRequest, response, 150, 1);
 	}
+
+	@Test
+	public void firstRequestSucceedsNeverHedge() {
+		when(hedgingClient.shouldHedge(clientRequest)).thenReturn(true);
+		when(hedgingClient.getNumberOfHedgedRequests(clientRequest)).thenReturn(2);
+		when(hedgingClient.getDelayBeforeHedging(clientRequest)).thenReturn(Duration.ofMillis(100));
+
+		ClientResponse response = mock(ClientResponse.class);
+		StepVerifier.withVirtualTime(() -> {
+			when(exchangeFunction.exchange(clientRequest)).thenReturn(Mono.just(response).delayElement(Duration.ofMillis(50)));
+
+			HedgedRequestsExchangeFilterFunction filter = new HedgedRequestsExchangeFilterFunction(hedgingClient, Collections
+					.singletonList(metricsReporter));
+			return filter.filter(clientRequest, exchangeFunction);
+		})
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(50))
+				.expectNext(response)
+				.verifyComplete();
+
+		verify(hedgingClient).record(clientRequest, response, 50, null);
+		verify(metricsReporter).record(clientRequest, response, 50, null);
+		verify(exchangeFunction, times(1)).exchange(clientRequest);
+	}
+
+	@Test
+	public void secondRequestSucceedsDontMakeThird() {
+		when(hedgingClient.shouldHedge(clientRequest)).thenReturn(true);
+		when(hedgingClient.getNumberOfHedgedRequests(clientRequest)).thenReturn(5);
+		when(hedgingClient.getDelayBeforeHedging(clientRequest)).thenReturn(Duration.ofMillis(100));
+
+		ClientResponse response = mock(ClientResponse.class);
+		StepVerifier.withVirtualTime(() -> {
+			AtomicInteger count = new AtomicInteger(0);
+			when(exchangeFunction.exchange(clientRequest)).then(invocation -> count.getAndIncrement() == 1 ? Mono.just(response).delayElement(Duration.ofMillis(50)) : Mono.never());
+
+			HedgedRequestsExchangeFilterFunction filter = new HedgedRequestsExchangeFilterFunction(hedgingClient, Collections
+					.singletonList(metricsReporter));
+			return filter.filter(clientRequest, exchangeFunction);
+		})
+				.expectSubscription()
+				.expectNoEvent(Duration.ofMillis(150))
+				.expectNext(response)
+				.verifyComplete();
+
+		verify(hedgingClient).record(clientRequest, response, 50, 1);
+		verify(metricsReporter).record(clientRequest, response, 50, 1);
+		verify(exchangeFunction, times(2)).exchange(clientRequest);
+	}
 }

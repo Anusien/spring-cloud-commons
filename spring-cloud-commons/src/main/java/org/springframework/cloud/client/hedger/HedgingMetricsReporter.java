@@ -20,6 +20,10 @@ import org.springframework.lang.Nullable;
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ClientResponse;
 
+/**
+ * @author Csaba Kos
+ * @author Kevin Binswanger
+ */
 @FunctionalInterface
 public interface HedgingMetricsReporter {
 	void record(ClientRequest request,

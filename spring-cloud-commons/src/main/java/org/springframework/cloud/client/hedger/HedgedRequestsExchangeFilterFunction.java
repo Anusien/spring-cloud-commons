@@ -44,6 +44,9 @@ import org.springframework.web.reactive.function.client.ExchangeFunction;
  * latencies.)
  *
  * {@see http://accelazh.github.io/storage/Tail-Latency-Study} for more background on how hedging works.
+ *
+ * @author Csaba Kos
+ * @author Kevin Binswanger
  */
 public class HedgedRequestsExchangeFilterFunction implements ExchangeFilterFunction {
 
@@ -67,8 +70,8 @@ public class HedgedRequestsExchangeFilterFunction implements ExchangeFilterFunct
 		return withSingleMetricsReporting(request, next.exchange(request), null)
 				.mergeWith(
 						Flux.range(1, numHedges)
-						.flatMap(hedgeNumber -> withSingleMetricsReporting(request, next.exchange(request), hedgeNumber)
-								.delaySubscription(delay.multipliedBy(hedgeNumber))
+								.delayElements(delay)
+								.flatMap(hedgeNumber -> withSingleMetricsReporting(request, next.exchange(request), hedgeNumber)
 								.onErrorResume(throwable -> {
 									if (LOG.isDebugEnabled()) {
 										LOG.debug("Hedged request " + hedgeNumber + " to " + request.url() + " failed", throwable);

@@ -16,7 +16,6 @@
 
 package org.springframework.cloud.client.hedger;
 
-
 import java.time.Duration;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
@@ -32,6 +31,10 @@ import org.springframework.lang.Nullable;
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ClientResponse;
 
+/**
+ * @author Csaba Kos
+ * @author Kevin Binswanger
+ */
 public class SimpleLatencyDistributionPercentileHedgingClient implements HedgingClient {
 	private final Predicate<ClientRequest> shouldTrackRequestPredicate;
 	private final int numHedgedRequests;
