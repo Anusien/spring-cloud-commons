@@ -21,11 +21,22 @@ import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ClientResponse;
 
 /**
+ * Hedging could create multiple requests to a given service. Any monitoring tools put around the request will therefore
+ * see a bunch of requests, many of which are superfluous. This is a way to get reporting just around which attempt
+ * eventually succeeds.
  * @author Csaba Kos
  * @author Kevin Binswanger
  */
 @FunctionalInterface
 public interface HedgingMetricsReporter {
+	/**
+	 * Invoked by {@link HedgedRequestsExchangeFilterFunction} when an attempt actually succeeds.
+	 * @param request The object for the request
+	 * @param response The object for the response.
+	 * @param elapsedMillis The number of milliseconds elapsed just for this attempt (ignores time spent waiting on
+	 *                      previous attempts.
+	 * @param hedgeNumber {null} for the original request, or which hedge attempt this is (starting at 1).
+	 */
 	void record(ClientRequest request,
 				ClientResponse response,
 				long elapsedMillis,

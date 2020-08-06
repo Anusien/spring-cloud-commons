@@ -42,6 +42,7 @@ public class SimpleLatencyDistributionPercentileHedgingClientTests {
 
 	@Before
 	public void setup() {
+		//noinspection unchecked
 		this.predicate = mock(Predicate.class);
 		this.clock = new MockClock();
 	}

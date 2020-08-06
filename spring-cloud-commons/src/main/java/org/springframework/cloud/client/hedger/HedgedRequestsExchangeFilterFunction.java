@@ -50,7 +50,7 @@ import org.springframework.web.reactive.function.client.ExchangeFunction;
  */
 public class HedgedRequestsExchangeFilterFunction implements ExchangeFilterFunction {
 
-	private static Log LOG = LogFactory
+	private static final Log log = LogFactory
 			.getLog(HedgedRequestsExchangeFilterFunction.class);
 
 	private HedgingClient hedgingClient;
@@ -73,8 +73,8 @@ public class HedgedRequestsExchangeFilterFunction implements ExchangeFilterFunct
 								.delayElements(delay)
 								.flatMap(hedgeNumber -> withSingleMetricsReporting(request, next.exchange(request), hedgeNumber)
 								.onErrorResume(throwable -> {
-									if (LOG.isDebugEnabled()) {
-										LOG.debug("Hedged request " + hedgeNumber + " to " + request.url() + " failed", throwable);
+									if (log.isDebugEnabled()) {
+										log.debug("Hedged request " + hedgeNumber + " to " + request.url() + " failed", throwable);
 									}
 									return Mono.empty();
 								}))
@@ -111,6 +111,4 @@ public class HedgedRequestsExchangeFilterFunction implements ExchangeFilterFunct
 				})
 				.map(Tuple2::getT2);
 	}
-
-
 }

@@ -58,5 +58,5 @@ public @interface Hedged {
 	 * {@link HedgingMetricsReporter} and they will get called on each request.
 	 * @return the hedged reporter bean names
 	 */
-	String[] metricReporters() default {};
+	String[] metricsReporters() default {};
 }
