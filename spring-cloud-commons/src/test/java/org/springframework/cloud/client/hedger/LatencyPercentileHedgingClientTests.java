@@ -57,7 +57,7 @@ public class LatencyPercentileHedgingClientTests {
 	public void testNumberOfHedgedRequests() {
 		int numberOfHedgedRequests = 23;
 		LatencyPercentileHedgingClient client = new LatencyPercentileHedgingClient(
-				predicate, 23, clock, 0.0
+				predicate, 23, 0.0, clock
 		);
 
 		then(client.getNumberOfHedgedRequests(mock(ClientRequest.class))).isEqualTo(numberOfHedgedRequests);
@@ -69,7 +69,7 @@ public class LatencyPercentileHedgingClientTests {
 		when(predicate.test(request)).thenReturn(true);
 
 		LatencyPercentileHedgingClient client = new LatencyPercentileHedgingClient(
-				predicate, 1, clock, 0.0
+				predicate, 1, 0.0, clock
 		);
 
 		then(client.shouldHedge(request)).isTrue();
@@ -81,7 +81,7 @@ public class LatencyPercentileHedgingClientTests {
 		when(predicate.test(request)).thenReturn(false);
 
 		LatencyPercentileHedgingClient client = new LatencyPercentileHedgingClient(
-				predicate, 1, clock, 0.0
+				predicate, 1, 0.0, clock
 		);
 
 		then(client.shouldHedge(request)).isFalse();
