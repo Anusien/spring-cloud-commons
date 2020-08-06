@@ -22,12 +22,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
-import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.client.discovery.simple.SimpleDiscoveryClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -66,9 +64,7 @@ public class CompositeDiscoveryClientAutoConfigurationTests {
 				.isInstanceOf(SimpleDiscoveryClient.class);
 	}
 
-	@EnableDiscoveryClient
 	@EnableAutoConfiguration
-	@SpringBootConfiguration
 	@Configuration(proxyBeanMethods = false)
 	public static class Config {
 

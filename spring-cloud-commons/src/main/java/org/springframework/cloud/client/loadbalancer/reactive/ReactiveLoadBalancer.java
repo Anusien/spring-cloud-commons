@@ -46,6 +46,7 @@ public interface ReactiveLoadBalancer<T> {
 
 	@FunctionalInterface
 	interface Factory<T> {
+
 		ReactiveLoadBalancer<T> getInstance(String serviceId);
 
 	}
