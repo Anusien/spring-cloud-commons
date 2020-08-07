@@ -46,17 +46,5 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Inherited
 @Qualifier
 public @interface Hedged {
-	/**
-	 * Name of a bean of type {@link HedgingPolicy} used to configure hedging.
-	 * @return the hedging client bean name
-	 */
-	String hedgingPolicy();
 
-	/**
-	 * Hedging turns a single request into multiple different requests. Developers may want their application to
-	 * emit metrics or put hedging information into tracing spans. Specify any number of beans of type
-	 * {@link HedgingMetricsReporter} and they will get called on each request.
-	 * @return the hedged reporter bean names
-	 */
-	String[] metricsReporters() default {};
 }

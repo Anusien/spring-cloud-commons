@@ -36,7 +36,7 @@ import static org.mockito.Mockito.when;
  * @author Kevin Binswanger
  */
 @RunWith(MockitoJUnitRunner.class)
-public class LatencyPercentileHedgingPolicyTests {
+public class LatencyPercentileHedgerPolicyTests {
 	private Predicate<ClientRequest> predicate;
 	private Clock clock;
 
@@ -56,7 +56,7 @@ public class LatencyPercentileHedgingPolicyTests {
 	@Test
 	public void testNumberOfHedgedRequests() {
 		int numberOfHedgedRequests = 23;
-		LatencyPercentileHedgingPolicy client = new LatencyPercentileHedgingPolicy(
+		LatencyPercentileHedgerPolicy client = new LatencyPercentileHedgerPolicy(
 				predicate, 23, 0.0, clock
 		);
 
@@ -68,7 +68,7 @@ public class LatencyPercentileHedgingPolicyTests {
 		ClientRequest request = mock(ClientRequest.class);
 		when(predicate.test(request)).thenReturn(true);
 
-		LatencyPercentileHedgingPolicy client = new LatencyPercentileHedgingPolicy(
+		LatencyPercentileHedgerPolicy client = new LatencyPercentileHedgerPolicy(
 				predicate, 1, 0.0, clock
 		);
 
@@ -80,7 +80,7 @@ public class LatencyPercentileHedgingPolicyTests {
 		ClientRequest request = mock(ClientRequest.class);
 		when(predicate.test(request)).thenReturn(false);
 
-		LatencyPercentileHedgingPolicy client = new LatencyPercentileHedgingPolicy(
+		LatencyPercentileHedgerPolicy client = new LatencyPercentileHedgerPolicy(
 				predicate, 1, 0.0, clock
 		);
 

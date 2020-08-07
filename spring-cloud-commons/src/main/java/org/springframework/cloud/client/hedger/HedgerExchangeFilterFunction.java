@@ -18,7 +18,7 @@ package org.springframework.cloud.client.hedger;
 
 
 import java.time.Duration;
-import java.util.List;
+import java.util.Arrays;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -48,30 +48,28 @@ import org.springframework.web.reactive.function.client.ExchangeFunction;
  * @author Csaba Kos
  * @author Kevin Binswanger
  */
-public class HedgedRequestsExchangeFilterFunction implements ExchangeFilterFunction {
+public class HedgerExchangeFilterFunction implements ExchangeFilterFunction {
 
-	private static final Log log = LogFactory
-			.getLog(HedgedRequestsExchangeFilterFunction.class);
+	private static final Log log = LogFactory.getLog(HedgerExchangeFilterFunction.class);
 
-	private HedgingPolicy hedgingPolicy;
-	private List<HedgingMetricsReporter> hedgingMetricsReporterList;
+	private final HedgerPolicyFactory hedgerPolicyFactory;
 
-	public HedgedRequestsExchangeFilterFunction(
-			HedgingPolicy hedgingPolicy, List<HedgingMetricsReporter> hedgingMetricsReportersList) {
-		this.hedgingPolicy = hedgingPolicy;
-		this.hedgingMetricsReporterList = hedgingMetricsReportersList;
+	public HedgerExchangeFilterFunction(HedgerPolicyFactory hedgerPolicyFactory) {
+		this.hedgerPolicyFactory = hedgerPolicyFactory;
 	}
 
 	@Override
 	@NonNull
 	public Mono<ClientResponse> filter(@NonNull ClientRequest request, ExchangeFunction next) {
-		Duration delay = hedgingPolicy.getDelayBeforeHedging(request);
-		int numHedges = numberOfHedgedRequestsDelayAware(request, hedgingPolicy, delay);
-		return withSingleMetricsReporting(request, next.exchange(request), null)
+		HedgerPolicy hedgerPolicy = hedgerPolicyFactory.getHedgingPolicy(request);
+		HedgerListener[] hedgerListeners = hedgerPolicyFactory.getHedgingListeners(request);
+		Duration delay = hedgerPolicy.getDelayBeforeHedging(request);
+		int numHedges = numberOfHedgedRequestsDelayAware(request, hedgerPolicy, delay);
+		return withSingleMetricsReporting(hedgerPolicy, hedgerListeners, request, next.exchange(request), null)
 				.mergeWith(
 						Flux.range(1, numHedges)
 								.delayElements(delay)
-								.flatMap(hedgeNumber -> withSingleMetricsReporting(request, next.exchange(request), hedgeNumber)
+								.flatMap(hedgeNumber -> withSingleMetricsReporting(hedgerPolicy, hedgerListeners, request, next.exchange(request), hedgeNumber)
 								.onErrorResume(throwable -> {
 									if (log.isDebugEnabled()) {
 										log.debug("Hedged request " + hedgeNumber + " to " + request.url() + " failed", throwable);
@@ -84,21 +82,23 @@ public class HedgedRequestsExchangeFilterFunction implements ExchangeFilterFunct
 
 	private int numberOfHedgedRequestsDelayAware(
 			ClientRequest request,
-			HedgingPolicy hedgingPolicy,
+			HedgerPolicy hedgerPolicy,
 			Duration delay
 	) {
-		if (!hedgingPolicy.shouldHedge(request)) {
+		if (!hedgerPolicy.shouldHedge(request)) {
 			return 0;
 		}
 		else if (delay.isNegative()) {
 			return 0;
 		}
 		else {
-			return hedgingPolicy.getNumberOfHedgedRequests(request);
+			return hedgerPolicy.getNumberOfHedgedRequests(request);
 		}
 	}
 
 	private Mono<ClientResponse> withSingleMetricsReporting(
+			HedgerPolicy hedgerPolicy,
+			HedgerListener[] hedgerListeners,
 			ClientRequest request,
 			Mono<ClientResponse> response,
 			@Nullable Integer hedgeNumber
@@ -106,8 +106,8 @@ public class HedgedRequestsExchangeFilterFunction implements ExchangeFilterFunct
 		return response
 				.elapsed()
 				.doOnSuccess(tuple -> {
-					hedgingPolicy.record(request, tuple.getT2(), tuple.getT1(), hedgeNumber);
-					hedgingMetricsReporterList.forEach(reporter -> reporter.record(request, tuple.getT2(), tuple.getT1(), hedgeNumber));
+					hedgerPolicy.record(request, tuple.getT2(), tuple.getT1(), hedgeNumber);
+					Arrays.stream(hedgerListeners).forEach(reporter -> reporter.record(request, tuple.getT2(), tuple.getT1(), hedgeNumber));
 				})
 				.map(Tuple2::getT2);
 	}

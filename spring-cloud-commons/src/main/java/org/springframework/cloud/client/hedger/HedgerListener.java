@@ -28,9 +28,9 @@ import org.springframework.web.reactive.function.client.ClientResponse;
  * @author Kevin Binswanger
  */
 @FunctionalInterface
-public interface HedgingMetricsReporter {
+public interface HedgerListener {
 	/**
-	 * Invoked by {@link HedgedRequestsExchangeFilterFunction} when an attempt actually succeeds.
+	 * Invoked by {@link HedgerExchangeFilterFunction} when an attempt actually succeeds.
 	 * @param request The HTTP request.
 	 * @param response The eventual HTTP response.
 	 * @param elapsedMillis The number of milliseconds elapsed just for this attempt (ignores time spent waiting on

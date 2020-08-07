@@ -28,6 +28,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -39,20 +40,12 @@ import static org.mockito.Mockito.mock;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class ReactiveHedgingAutoConfigurationTests {
-
+public class ReactiveHedgerAutoConfigurationTests {
 	@Autowired
 	private WebClient.Builder webClientBuilder;
 
 	@Autowired
-	private HedgingPolicy hedgingPolicy;
-
-	@Autowired
-	HedgingMetricsReporter reporterA;
-
-	@Autowired
-	HedgingMetricsReporter reporterB;
-
+	HedgerPolicyFactory hedgerPolicyFactory;
 
 	@Test
 	public void webClientBuilderHadFilterApplied() {
@@ -62,20 +55,12 @@ public class ReactiveHedgingAutoConfigurationTests {
 		then(filters).hasSize(1);
 		//noinspection ConstantConditions
 		then(filters.get(0))
-				.isInstanceOf(HedgedRequestsExchangeFilterFunction.class);
-		HedgedRequestsExchangeFilterFunction filter =
-				(HedgedRequestsExchangeFilterFunction) filters.get(0);
+				.isInstanceOf(HedgerExchangeFilterFunction.class);
+		HedgerExchangeFilterFunction filter =
+				(HedgerExchangeFilterFunction) filters.get(0);
 
-		HedgingPolicy actualHedgingPolicy = (HedgingPolicy) ReflectionTestUtils.getField(filter, "hedgingPolicy");
-		then(actualHedgingPolicy).isEqualTo(hedgingPolicy);
-
-		//noinspection unchecked
-		List<HedgingMetricsReporter> metricsReporters = (List<HedgingMetricsReporter>)
-				ReflectionTestUtils.getField(filter, "hedgingMetricsReporterList");
-		then(metricsReporters).hasSize(2);
-		//noinspection ConstantConditions
-		then(metricsReporters.get(0)).isEqualTo(reporterA);
-		then(metricsReporters.get(1)).isEqualTo(reporterB);
+		HedgerPolicyFactory actualHedgerPolicyFactory = (HedgerPolicyFactory) ReflectionTestUtils.getField(filter, "hedgingPolicyFactory");
+		then(actualHedgerPolicyFactory).isEqualTo(hedgerPolicyFactory);
 	}
 
 	@EnableAutoConfiguration
@@ -83,22 +68,37 @@ public class ReactiveHedgingAutoConfigurationTests {
 	public static class Config {
 
 		@Bean
-		HedgingPolicy mockHedgingPolicy() {
-			return mock(HedgingPolicy.class);
+		HedgerPolicy mockHedgingPolicy() {
+			return mock(HedgerPolicy.class);
 		}
 
 		@Bean
-		HedgingMetricsReporter reporterA() {
-			return mock(HedgingMetricsReporter.class);
+		HedgerListener reporterA() {
+			return mock(HedgerListener.class);
 		}
 
 		@Bean
-		HedgingMetricsReporter reporterB() {
-			return mock(HedgingMetricsReporter.class);
+		HedgerListener reporterB() {
+			return mock(HedgerListener.class);
 		}
 
 		@Bean
-		@Hedged(hedgingPolicy = "mockHedgingPolicy", metricsReporters = {"reporterA", "reporterB"})
+		HedgerPolicyFactory hedgingPolicyFactory(HedgerPolicy hedgerPolicy, HedgerListener reporterA, HedgerListener reporterB) {
+			return new HedgerPolicyFactory() {
+				@Override
+				public HedgerPolicy getHedgingPolicy(ClientRequest request) {
+					return hedgerPolicy;
+				}
+
+				@Override
+				public HedgerListener[] getHedgingListeners(ClientRequest request) {
+					return new HedgerListener[] {reporterA, reporterB};
+				}
+			};
+		}
+
+		@Bean
+		@Hedged
 		WebClient.Builder buildWebClient() {
 			return WebClient.builder();
 		}

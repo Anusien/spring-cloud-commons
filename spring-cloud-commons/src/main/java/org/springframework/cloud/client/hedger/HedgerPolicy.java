@@ -27,7 +27,7 @@ import org.springframework.web.reactive.function.client.WebClient;
  * Controls the parameters for a {@link WebClient.Builder} annotated with {@link Hedged}.
  * @author Kevin Binswanger
  */
-public interface HedgingPolicy {
+public interface HedgerPolicy {
 	boolean shouldHedge(ClientRequest request);
 
 	int getNumberOfHedgedRequests(ClientRequest request);
@@ -35,7 +35,7 @@ public interface HedgingPolicy {
 	Duration getDelayBeforeHedging(ClientRequest request);
 
 	/**
-	 * Similar to {@link HedgingMetricsReporter}, this method will be invoked on requests by the {@link WebClient.Builder}
+	 * Similar to {@link HedgerListener}, this method will be invoked on requests by the {@link WebClient.Builder}
 	 * this policy attaches to. Will be called at most once for a hedged request sequence, on just the one request
 	 * that we actually used.
 	 * @param request The HTTP request.
