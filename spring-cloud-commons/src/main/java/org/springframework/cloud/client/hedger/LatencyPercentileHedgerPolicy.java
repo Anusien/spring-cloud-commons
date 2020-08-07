@@ -27,15 +27,18 @@ import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
 import io.micrometer.core.instrument.distribution.TimeWindowPercentileHistogram;
 
-import org.springframework.lang.Nullable;
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ClientResponse;
 
 /**
+ * Specify a percentile (e.g., 95th percentile) and sets policy to launch hedged requests after a given attempt has
+ * taken that amount of time. It accomplishes this this by registering as a {@link HedgerListener} and therefore
+ * gets informed of each individual HTTP request. Accordingly, this needs to be registered as a listener in the
+ *  {@link HedgerPolicyFactory} as well as a {@link HedgerPolicy}. See {@link LatencyPercentileHedgerPolicyFactory}.
  * @author Csaba Kos
  * @author Kevin Binswanger
  */
-public class LatencyPercentileHedgerPolicy implements HedgerPolicy {
+public class LatencyPercentileHedgerPolicy implements HedgerPolicy, HedgerListener {
 	private final Predicate<ClientRequest> shouldTrackRequestPredicate;
 	private final int numHedgedRequests;
 	private final TimeWindowMax max;
@@ -81,13 +84,8 @@ public class LatencyPercentileHedgerPolicy implements HedgerPolicy {
 	}
 
 	@Override
-	public boolean shouldHedge(ClientRequest request) {
-		return shouldTrackRequestPredicate.test(request);
-	}
-
-	@Override
-	public int getNumberOfHedgedRequests(ClientRequest request) {
-		return numHedgedRequests;
+	public int getMaximumHedgedRequests(ClientRequest request) {
+		return shouldTrackRequestPredicate.test(request) ? numHedgedRequests : 0;
 	}
 
 	public Duration getDelayBeforeHedging(ClientRequest request) {
@@ -103,7 +101,7 @@ public class LatencyPercentileHedgerPolicy implements HedgerPolicy {
 			ClientRequest request,
 			ClientResponse response,
 			long elapsedMillis,
-			@Nullable Integer hedgeNumber
+			int requestNumber
 	) {
 		if (shouldTrackRequestPredicate.test(request) && response.statusCode().is2xxSuccessful()) {
 			record(elapsedMillis);

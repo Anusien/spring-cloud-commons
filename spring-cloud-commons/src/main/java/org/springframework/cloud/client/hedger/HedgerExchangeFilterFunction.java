@@ -18,7 +18,6 @@ package org.springframework.cloud.client.hedger;
 
 
 import java.time.Duration;
-import java.util.Arrays;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,7 +26,6 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
 import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
@@ -65,11 +63,11 @@ public class HedgerExchangeFilterFunction implements ExchangeFilterFunction {
 		HedgerListener[] hedgerListeners = hedgerPolicyFactory.getHedgingListeners(request);
 		Duration delay = hedgerPolicy.getDelayBeforeHedging(request);
 		int numHedges = numberOfHedgedRequestsDelayAware(request, hedgerPolicy, delay);
-		return withSingleMetricsReporting(hedgerPolicy, hedgerListeners, request, next.exchange(request), null)
+		return withSingleMetricsReporting(hedgerListeners, request, next.exchange(request), 0)
 				.mergeWith(
 						Flux.range(1, numHedges)
 								.delayElements(delay)
-								.flatMap(hedgeNumber -> withSingleMetricsReporting(hedgerPolicy, hedgerListeners, request, next.exchange(request), hedgeNumber)
+								.flatMap(hedgeNumber -> withSingleMetricsReporting(hedgerListeners, request, next.exchange(request), hedgeNumber)
 								.onErrorResume(throwable -> {
 									if (log.isDebugEnabled()) {
 										log.debug("Hedged request " + hedgeNumber + " to " + request.url() + " failed", throwable);
@@ -85,29 +83,31 @@ public class HedgerExchangeFilterFunction implements ExchangeFilterFunction {
 			HedgerPolicy hedgerPolicy,
 			Duration delay
 	) {
-		if (!hedgerPolicy.shouldHedge(request)) {
-			return 0;
-		}
-		else if (delay.isNegative()) {
+		if (delay.isNegative()) {
 			return 0;
 		}
 		else {
-			return hedgerPolicy.getNumberOfHedgedRequests(request);
+			return hedgerPolicy.getMaximumHedgedRequests(request);
 		}
 	}
 
 	private Mono<ClientResponse> withSingleMetricsReporting(
-			HedgerPolicy hedgerPolicy,
 			HedgerListener[] hedgerListeners,
 			ClientRequest request,
 			Mono<ClientResponse> response,
-			@Nullable Integer hedgeNumber
+			int hedgeNumber
 	) {
 		return response
 				.elapsed()
 				.doOnSuccess(tuple -> {
-					hedgerPolicy.record(request, tuple.getT2(), tuple.getT1(), hedgeNumber);
-					Arrays.stream(hedgerListeners).forEach(reporter -> reporter.record(request, tuple.getT2(), tuple.getT1(), hedgeNumber));
+					for (HedgerListener hedgerListener : hedgerListeners) {
+						try {
+							hedgerListener.record(request, tuple.getT2(), tuple.getT1(), hedgeNumber);
+						}
+						catch (Exception e) {
+							log.warn("Hedger listener threw an exception trying to report on attempt " + hedgeNumber, e);
+						}
+					}
 				})
 				.map(Tuple2::getT2);
 	}

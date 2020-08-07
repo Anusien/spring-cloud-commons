@@ -16,29 +16,32 @@
 
 package org.springframework.cloud.client.hedger;
 
-import org.springframework.lang.Nullable;
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ClientResponse;
 
 /**
- * Hedging could create multiple requests to a given service. Any monitoring tools put around the request will therefore
- * see a bunch of requests, many of which are superfluous. This is a way to get reporting just around which attempt
- * eventually succeeds.
+ * Hedging could create multiple requests to a given service where an application previously made one. This provides
+ * a hedging-aware mechanism to do any special handling necessary. Example uses:
+ * <ul>
+ *     <li>Track the latency of each individual request instead of the total batch<./li>
+ *     <li>Tag a metric with the request number.</li>
+ *     <li>Track the number of hedged requests made.</li>
+ * </ul>
  * @author Csaba Kos
  * @author Kevin Binswanger
  */
 @FunctionalInterface
 public interface HedgerListener {
 	/**
-	 * Invoked by {@link HedgerExchangeFilterFunction} when an attempt actually succeeds.
+	 * Invoked by {@link HedgerExchangeFilterFunction} on every individual attempt.
 	 * @param request The HTTP request.
 	 * @param response The eventual HTTP response.
 	 * @param elapsedMillis The number of milliseconds elapsed just for this attempt (ignores time spent waiting on
 	 *                      previous attempts).
-	 * @param hedgeNumber {null} for the original request, or which hedge attempt this is (starting at 1).
+	 * @param requestNumber Which attempt this is. The original will be 0, and the first hedged request will be 1.
 	 */
 	void record(ClientRequest request,
 				ClientResponse response,
 				long elapsedMillis,
-				@Nullable Integer hedgeNumber);
+				int requestNumber);
 }

@@ -35,7 +35,6 @@ import org.springframework.web.reactive.function.client.ExchangeFunction;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -82,7 +81,7 @@ public class HedgerExchangeFilterFunctionTests {
 
 	@Test
 	public void noHedgesShouldNotHedge() {
-		when(hedgerPolicy.shouldHedge(clientRequest)).thenReturn(false);
+		when(hedgerPolicy.getMaximumHedgedRequests(clientRequest)).thenReturn(0);
 		when(hedgerPolicy.getDelayBeforeHedging(clientRequest)).thenReturn(Duration.of(100, ChronoUnit.SECONDS));
 		when(exchangeFunction.exchange(clientRequest)).thenReturn(Mono.empty()); // to make post-success reporting work
 
@@ -94,7 +93,6 @@ public class HedgerExchangeFilterFunctionTests {
 
 	@Test
 	public void negativeDelayShouldNotHedge() {
-		when(hedgerPolicy.shouldHedge(clientRequest)).thenReturn(true);
 		when(hedgerPolicy.getDelayBeforeHedging(clientRequest)).thenReturn(Duration.of(-1, ChronoUnit.SECONDS));
 		when(exchangeFunction.exchange(clientRequest)).thenReturn(Mono.empty()); // to make post-success reporting work
 
@@ -105,8 +103,8 @@ public class HedgerExchangeFilterFunctionTests {
 	}
 
 	@Test
-	public void correctlyReportMetrics() {
-		when(hedgerPolicy.shouldHedge(clientRequest)).thenReturn(false);
+	public void correctlyReportMetricsNoHedging() {
+		when(hedgerPolicy.getMaximumHedgedRequests(clientRequest)).thenReturn(1);
 		when(hedgerPolicy.getDelayBeforeHedging(clientRequest)).thenReturn(Duration.of(100, ChronoUnit.SECONDS));
 
 		ClientResponse response = mock(ClientResponse.class);
@@ -116,14 +114,12 @@ public class HedgerExchangeFilterFunctionTests {
 		Mono<ClientResponse> actual = filter.filter(clientRequest, exchangeFunction);
 
 		then(actual.block()).isEqualTo(response);
-		verify(hedgerPolicy).record(eq(clientRequest), eq(response), anyLong(), isNull());
-		verify(metricsReporter).record(eq(clientRequest), eq(response), anyLong(), isNull());
+		verify(metricsReporter).record(eq(clientRequest), eq(response), anyLong(), eq(0));
 	}
 
 	@Test
 	public void hedgeOnceButOriginalReturnsFirst() {
-		when(hedgerPolicy.shouldHedge(clientRequest)).thenReturn(true);
-		when(hedgerPolicy.getNumberOfHedgedRequests(clientRequest)).thenReturn(1);
+		when(hedgerPolicy.getMaximumHedgedRequests(clientRequest)).thenReturn(1);
 		when(hedgerPolicy.getDelayBeforeHedging(clientRequest)).thenReturn(Duration.of(100, ChronoUnit.MILLIS));
 
 		ClientResponse response = mock(ClientResponse.class);
@@ -141,14 +137,12 @@ public class HedgerExchangeFilterFunctionTests {
 				.expectNext(response)
 				.verifyComplete();
 
-		verify(hedgerPolicy).record(clientRequest, response, 200, null);
-		verify(metricsReporter).record(clientRequest, response, 200, null);
+		verify(metricsReporter).record(clientRequest, response, 200, 0);
 	}
 
 	@Test
 	public void hedgeOnceOriginalNeverReturns() {
-		when(hedgerPolicy.shouldHedge(clientRequest)).thenReturn(true);
-		when(hedgerPolicy.getNumberOfHedgedRequests(clientRequest)).thenReturn(1);
+		when(hedgerPolicy.getMaximumHedgedRequests(clientRequest)).thenReturn(1);
 		when(hedgerPolicy.getDelayBeforeHedging(clientRequest)).thenReturn(Duration.ofMillis(100));
 
 		ClientResponse response = mock(ClientResponse.class);
@@ -167,14 +161,12 @@ public class HedgerExchangeFilterFunctionTests {
 				.expectNext(response)
 				.verifyComplete();
 
-		verify(hedgerPolicy).record(clientRequest, response, 150, 1);
 		verify(metricsReporter).record(clientRequest, response, 150, 1);
 	}
 
 	@Test
 	public void firstRequestSucceedsNeverHedge() {
-		when(hedgerPolicy.shouldHedge(clientRequest)).thenReturn(true);
-		when(hedgerPolicy.getNumberOfHedgedRequests(clientRequest)).thenReturn(2);
+		when(hedgerPolicy.getMaximumHedgedRequests(clientRequest)).thenReturn(2);
 		when(hedgerPolicy.getDelayBeforeHedging(clientRequest)).thenReturn(Duration.ofMillis(100));
 
 		ClientResponse response = mock(ClientResponse.class);
@@ -189,15 +181,13 @@ public class HedgerExchangeFilterFunctionTests {
 				.expectNext(response)
 				.verifyComplete();
 
-		verify(hedgerPolicy).record(clientRequest, response, 50, null);
-		verify(metricsReporter).record(clientRequest, response, 50, null);
+		verify(metricsReporter).record(clientRequest, response, 50, 0);
 		verify(exchangeFunction, times(1)).exchange(clientRequest);
 	}
 
 	@Test
 	public void secondRequestSucceedsDontMakeThird() {
-		when(hedgerPolicy.shouldHedge(clientRequest)).thenReturn(true);
-		when(hedgerPolicy.getNumberOfHedgedRequests(clientRequest)).thenReturn(5);
+		when(hedgerPolicy.getMaximumHedgedRequests(clientRequest)).thenReturn(5);
 		when(hedgerPolicy.getDelayBeforeHedging(clientRequest)).thenReturn(Duration.ofMillis(100));
 
 		ClientResponse response = mock(ClientResponse.class);
@@ -213,7 +203,6 @@ public class HedgerExchangeFilterFunctionTests {
 				.expectNext(response)
 				.verifyComplete();
 
-		verify(hedgerPolicy).record(clientRequest, response, 50, 1);
 		verify(metricsReporter).record(clientRequest, response, 50, 1);
 		verify(exchangeFunction, times(2)).exchange(clientRequest);
 	}

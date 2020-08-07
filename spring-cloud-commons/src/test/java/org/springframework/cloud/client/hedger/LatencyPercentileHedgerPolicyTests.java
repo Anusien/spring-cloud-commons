@@ -60,7 +60,7 @@ public class LatencyPercentileHedgerPolicyTests {
 				predicate, 23, 0.0, clock
 		);
 
-		then(client.getNumberOfHedgedRequests(mock(ClientRequest.class))).isEqualTo(numberOfHedgedRequests);
+		then(client.getMaximumHedgedRequests(mock(ClientRequest.class))).isEqualTo(numberOfHedgedRequests);
 	}
 
 	@Test
@@ -72,7 +72,7 @@ public class LatencyPercentileHedgerPolicyTests {
 				predicate, 1, 0.0, clock
 		);
 
-		then(client.shouldHedge(request)).isTrue();
+		then(client.getMaximumHedgedRequests(request)).isEqualTo(1);
 	}
 
 	@Test
@@ -84,6 +84,6 @@ public class LatencyPercentileHedgerPolicyTests {
 				predicate, 1, 0.0, clock
 		);
 
-		then(client.shouldHedge(request)).isFalse();
+		then(client.getMaximumHedgedRequests(request)).isEqualTo(0);
 	}
 }
